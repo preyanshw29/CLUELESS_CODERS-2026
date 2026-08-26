@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PhishGuard — AI-Based Phishing & Social Engineering Detection Assistant
+
+Built for **PS57** (Blockchain & Cybersecurity theme), NIT Raipur Internal Hackathon 2026 — the institute selection round for Smart India Hackathon 2026.
+
+> Existing filters only catch known-bad links. PhishGuard catches the psychological manipulation behind an attack — including brand-new, link-free social engineering — and explains *why* in plain language instead of a binary safe/unsafe flag.
+
+Project docs (problem statement, architecture, build rules, phased plan, design spec) live in [`/SIH_FINAL`](./SIH_FINAL).
+
+## How It Works
+
+Input → Local Heuristics + VirusTotal Lookup + LLM Reasoning (parallel) → Rubric-Based Weighted Scoring → Explainable UI
+
+- **Local Heuristics:** Levenshtein-based domain lookalike detection, TLD risk scoring, anchor-tag mismatch detection, urgency-keyword matching
+- **Threat Intelligence:** VirusTotal API for real-time URL/domain reputation
+- **AI Reasoning:** LLM-based intent and psychological-pressure-tactic analysis — catches link-free social engineering that pure blocklists miss
+- **Scoring:** Rubric-based weighted engine combines all three signals into a single 0–100 threat score with a plain-language explanation
+
+## Tech Stack
+
+- **Frontend + Backend:** Next.js (App Router), React, TypeScript, Tailwind CSS
+- **Database:** SQLite with Prisma ORM (analysis history)
+- **AI:** Gemini/Claude API
+- **Threat Intel:** VirusTotal API
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.example .env.local   # add your real API keys
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.example`. You'll need a VirusTotal API key and an LLM provider key (Gemini or Claude). Never commit `.env.local` or any real key.
 
-## Learn More
+## Core Design Principles
 
-To learn more about Next.js, take a look at the following resources:
+1. PII is anonymized before every LLM call — no exceptions.
+2. The sample test cases work fully offline (hardcoded fallback responses) so the live demo never depends on network/API uptime.
+3. Every LLM/API call handles failure gracefully — falls back to heuristic-only scoring rather than breaking.
+4. Risk verdicts are always weighted combinations, never a single binary signal.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Full details: see [`/SIH_FINAL/RULES_PhishGuard_PS57.md`](./SIH_FINAL/RULES_PhishGuard_PS57.md).
