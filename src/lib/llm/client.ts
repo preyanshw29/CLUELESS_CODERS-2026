@@ -81,7 +81,7 @@ async function callGroq(text: string, apiKey: string, timeoutMs: number): Promis
     model: model,
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: text }
+      { role: "user", content: `Specimen to analyze: "${text}"` }
     ],
     temperature: temp,
     response_format: { type: "json_object" },
