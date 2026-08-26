@@ -21,18 +21,14 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-// Helper to clean up any markdown JSON wrapper if present
+// Helper to clean up any markdown JSON wrapper or conversational text if present
 function cleanJsonResponse(rawText: string): string {
-  let cleaned = rawText.trim();
-  if (cleaned.startsWith("```json")) {
-    cleaned = cleaned.substring(7);
-  } else if (cleaned.startsWith("```")) {
-    cleaned = cleaned.substring(3);
+  const firstBrace = rawText.indexOf("{");
+  const lastBrace = rawText.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return rawText.substring(firstBrace, lastBrace + 1).trim();
   }
-  if (cleaned.endsWith("```")) {
-    cleaned = cleaned.substring(0, cleaned.length - 3);
-  }
-  return cleaned.trim();
+  return rawText.trim();
 }
 
 async function callGemini(text: string, apiKey: string, timeoutMs: number): Promise<LLMAnalysisResult> {
