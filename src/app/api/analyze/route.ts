@@ -107,7 +107,21 @@ export async function POST(request: Request) {
 
     // If matches a demo case and bypass/offline mode is preferred (or if we detect it's a demo)
     if (matchedCase && body.offlineMode) {
-      return NextResponse.json(matchedCase.response);
+      const finalResult = { ...matchedCase.response, scanId: "" };
+      try {
+        const db = await getDb();
+        const scanEntry = {
+          ...finalResult,
+          rawContent: rawContent.length > 250 ? rawContent.substring(0, 250) + "..." : rawContent,
+          timestamp: new Date(),
+        };
+        const insertRes = await db.collection("scans").insertOne(scanEntry);
+        finalResult.scanId = insertRes.insertedId.toString();
+      } catch (saveErr) {
+        console.warn("Could not save demo scan to database, falling back to dummy scanId.");
+        finalResult.scanId = "demo-" + Math.random().toString(36).substring(2, 9);
+      }
+      return NextResponse.json(finalResult);
     }
 
     // Attempt to fetch dynamic heuristics from MongoDB if possible

@@ -1,0 +1,86 @@
+Websites / URLs (for heuristics + VirusTotal testing)
+
+
+
+====>>Lookalike domains:
+
+-> http://paypa1-secure.com/login
+-> http://appleid-verify-account.support
+-> http://amaz0n-orders.xyz/track
+-> http://netflix-billing-update.club
+
+
+
+
+=====>>Known-safe URLs (should NOT flag):
+
+-> https://www.google.com
+-> https://github.com
+-> https://www.nitrr.ac.in
+
+
+
+
+
+=====>>> Phishing (bank):
+
+-> Dear Customer, your ICICI Bank card has been TEMPORARILY BLOCKED due to suspicious activity. Verify now: icici-verify.win or your card will be permanently deactivated.
+
+-> Phishing (delivery scam — very common pattern, not yet in your test set):
+
+-> Your parcel could not be delivered due to incomplete address. Update details within 12 hrs to avoid return: indiapost-     redelivery.tk/track
+
+
+
+
+
+=====>>Legitimate (should NOT flag):
+
+-> Your OTP for login is 738291. Valid for 10 minutes. Do not share with anyone. - HDFC Bank
+   Emails
+
+
+
+
+
+======>>Phishing (fake invoice — different pattern than your existing bank/HR cases):
+
+Subject: Invoice #4471 Overdue — Immediate Payment Required
+
+Dear Sir/Madam,
+
+Your invoice #4471 for Rs. 24,500 is now 15 days overdue. To avoid legal action and additional late fees, please make payment immediately via the secure portal below.
+
+Pay Now: billing-secure-portal.info/pay
+
+Accounts Receivable Team
+
+
+
+
+
+=====>>Social engineering (IT support impersonation — no link, tests LLM layer):
+
+Subject: Mandatory System Update — Your Access
+
+Hi,
+
+Our IT team is rolling out a mandatory security patch today. To avoid losing access to your account, please reply with your current password so we can verify and migrate your credentials before the 5 PM cutoff.
+
+Regards,
+IT Support Desk
+
+
+
+
+
+=====>>Legitimate (should NOT flag):
+
+Subject: Reminder: Library Books Due This Friday
+
+Dear Student,
+
+This is a reminder that your currently borrowed library books are due for return this Friday. Please renew online via the student portal if you need more time.
+
+Central Library
+NIT Raipur

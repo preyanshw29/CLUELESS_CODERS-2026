@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "./prompt";
 import { checkTyposquatting as checkRubricTyposquatting, getDomainAgeDays } from "@/lib/rubric/urlSignals";
@@ -35,25 +35,24 @@ function cleanJsonResponse(rawText: string): string {
 }
 
 async function callGemini(text: string, apiKey: string, timeoutMs: number): Promise<LLMAnalysisResult> {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  // Using gemini-1.5-flash for speed and structured outputs
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    systemInstruction: SYSTEM_PROMPT,
-  });
-
+  const ai = new GoogleGenAI({ apiKey });
   const temp = parseFloat(process.env.LLM_TEMPERATURE || "0.2");
 
-  const responsePromise = model.generateContent({
-    contents: [{ role: "user", parts: [{ text }] }],
-    generationConfig: {
+  const responsePromise = ai.models.generateContent({
+    model: "gemini-1.5-flash",
+    contents: text,
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
       temperature: temp,
       responseMimeType: "application/json",
     },
   });
 
   const result = await withTimeout(responsePromise, timeoutMs);
-  const responseText = result.response.text();
+  const responseText = result.text;
+  if (!responseText) {
+    throw new Error("Empty response from Gemini");
+  }
   const cleaned = cleanJsonResponse(responseText);
   return JSON.parse(cleaned) as LLMAnalysisResult;
 }
