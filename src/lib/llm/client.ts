@@ -75,12 +75,53 @@ async function callClaude(text: string, apiKey: string, timeoutMs: number): Prom
   return JSON.parse(cleaned) as LLMAnalysisResult;
 }
 
+async function callGroq(text: string, apiKey: string, timeoutMs: number): Promise<LLMAnalysisResult> {
+  const temp = parseFloat(process.env.LLM_TEMPERATURE || "0.2");
+  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+
+  const responsePromise = fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: text }
+      ],
+      temperature: temp,
+      response_format: { type: "json_object" },
+    }),
+  });
+
+  const response = await withTimeout(responsePromise, timeoutMs);
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Groq API returned error ${response.status}: ${errText}`);
+  }
+
+  const data = await response.json();
+  const responseText = data.choices?.[0]?.message?.content;
+  if (!responseText) {
+    throw new Error("Empty response from Groq");
+  }
+
+  const cleaned = cleanJsonResponse(responseText);
+  return JSON.parse(cleaned) as LLMAnalysisResult;
+}
+
 export async function analyzeWithLLM(text: string): Promise<LLMAnalysisResult | null> {
-  const primaryProvider = process.env.LLM_PROVIDER || "gemini";
+  const primaryProvider = process.env.LLM_PROVIDER || "groq";
   const timeoutMs = parseInt(process.env.LLM_TIMEOUT_MS || "8000", 10);
 
   const callProvider = async (provider: string) => {
-    if (provider === "gemini") {
+    if (provider === "groq") {
+      const apiKey = process.env.GROQ_API_KEY;
+      if (!apiKey) throw new Error("GROQ_API_KEY is not defined");
+      return await callGroq(text, apiKey, timeoutMs);
+    } else if (provider === "gemini") {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
       return await callGemini(text, apiKey, timeoutMs);
@@ -91,10 +132,10 @@ export async function analyzeWithLLM(text: string): Promise<LLMAnalysisResult | 
     }
   };
 
-  const secondaryProvider = primaryProvider === "gemini" ? "claude" : "gemini";
-  const hasSecondaryKey = secondaryProvider === "gemini" 
-    ? !!process.env.GEMINI_API_KEY 
-    : !!process.env.ANTHROPIC_API_KEY;
+  const secondaryProvider = primaryProvider === "groq" ? "gemini" : "groq";
+  const hasSecondaryKey = secondaryProvider === "gemini"
+    ? !!process.env.GEMINI_API_KEY
+    : !!process.env.GROQ_API_KEY;
 
   try {
     // 1. Try Primary LLM Provider
