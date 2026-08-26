@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT } from "./prompt";
 import { checkTyposquatting as checkRubricTyposquatting, getDomainAgeDays } from "@/lib/rubric/urlSignals";
+import Groq from "groq-sdk";
 
 export interface LLMAnalysisResult {
   risk_score: number;
@@ -76,34 +77,22 @@ async function callClaude(text: string, apiKey: string, timeoutMs: number): Prom
 }
 
 async function callGroq(text: string, apiKey: string, timeoutMs: number): Promise<LLMAnalysisResult> {
+  const groq = new Groq({ apiKey });
   const temp = parseFloat(process.env.LLM_TEMPERATURE || "0.2");
   const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
 
-  const responsePromise = fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: text }
-      ],
-      temperature: temp,
-      response_format: { type: "json_object" },
-    }),
+  const responsePromise = groq.chat.completions.create({
+    model: model,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: text }
+    ],
+    temperature: temp,
+    response_format: { type: "json_object" },
   });
 
   const response = await withTimeout(responsePromise, timeoutMs);
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Groq API returned error ${response.status}: ${errText}`);
-  }
-
-  const data = await response.json();
-  const responseText = data.choices?.[0]?.message?.content;
+  const responseText = response.choices?.[0]?.message?.content;
   if (!responseText) {
     throw new Error("Empty response from Groq");
   }
