@@ -71,6 +71,20 @@ class MockCollection {
     };
   }
 
+  async findOne(query: any) {
+    const data = readFallbackDb();
+    const list = data[this.name] || [];
+    const item = list.find((item: any) => {
+      for (const key in query) {
+        const qVal = query[key] && typeof query[key] === "object" ? query[key].toString() : query[key];
+        const iVal = item[key] && typeof item[key] === "object" ? item[key].toString() : item[key];
+        if (iVal !== qVal) return false;
+      }
+      return true;
+    });
+    return item || null;
+  }
+
   async insertOne(doc: any) {
     const data = readFallbackDb();
     if (!data[this.name]) data[this.name] = [];
