@@ -144,6 +144,39 @@ export async function POST(request: Request) {
       console.warn("Database connection unavailable or failed to seed/query. Falling back to local static rules.");
     }
 
+    const truncatedContent = rawContent.length > 250 ? rawContent.substring(0, 250) + "..." : rawContent;
+
+    // Check if we have a user-reported feedback correction for this exact content
+    if (dbConnected) {
+      try {
+        const db = await getDb();
+        const existingCorrection = await db.collection("scans").findOne({
+          rawContent: truncatedContent,
+          reported: true
+        });
+        if (existingCorrection) {
+          console.log("Feedback override found! Returning user-corrected verdict.");
+          const reportedVerdict = existingCorrection.reportedVerdict;
+          const finalScore = reportedVerdict === "Legitimate" ? 10 : reportedVerdict === "Suspicious" ? 45 : 85;
+          return NextResponse.json({
+            finalScore,
+            final_score: finalScore,
+            verdict: reportedVerdict,
+            threat_factors: ["User Correction Applied"],
+            explanation: `Feedback Learning Active: Adjusted verdict to ${reportedVerdict} based on your previous correction report: "${existingCorrection.reportedComments || "No comment provided"}".`,
+            source_breakdown: {
+              heuristic_score: reportedVerdict === "Legitimate" ? 10 : 40,
+              llm_score: reportedVerdict === "Legitimate" ? 10 : 80,
+            },
+            aiOffline: false,
+            scanId: existingCorrection._id.toString()
+          });
+        }
+      } catch (dbErr) {
+        console.warn("Could not query feedback corrections:", dbErr);
+      }
+    }
+
     // 1. Sanitize & Normalize Input
     const normalizedInput: NormalizedInput = {
       rawText: rawContent.trim(),
